@@ -44,15 +44,15 @@ public class SecurityConfig {
                 .permitAll()
         ;
 
-        Objects.requireNonNull(permissionUseCase.getAllPermissionData().collectList().block())
-                .forEach( permission -> {
-                    log.debug("permission ++ {}", permission);
-                    if(permission.getPermissionName().equalsIgnoreCase("All"))
-                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl()).permitAll();
-                    else
-                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl())
-                                .hasAnyAuthority(permission.getPermissionName());
-                });
+//        Objects.requireNonNull(permissionUseCase.getAllPermissionData().collectList().block())
+//                .forEach( permission -> {
+//                    log.debug("permission ++ {}", permission);
+//                    if(permission.getPermissionName().equalsIgnoreCase("All"))
+//                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl()).permitAll();
+//                    else
+//                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl())
+//                                .hasAnyAuthority(permission.getPermissionName());
+//                });
 
         httpSecurity.authorizeExchange()
                 .anyExchange().authenticated()

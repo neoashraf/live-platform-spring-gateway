@@ -13,10 +13,15 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class PermissionService implements PermissionUseCase {
 
-    private final PermissionPersistencePort persistencePort;
+//    private final PermissionPersistencePort persistencePort;
+
+//    @Override
+//    public Flux<Permission> getAllPermissionData() {
+//        return persistencePort.getAllPermissionList();
+//    }
 
     @Override
     public Flux<Permission> getAllPermissionData() {
-        return persistencePort.getAllPermissionList();
+        return null;
     }
 }
