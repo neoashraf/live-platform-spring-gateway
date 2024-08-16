@@ -10,9 +10,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ValidateUserResponse {
-    List<Authority> authorities;
+//    List<Authority> authorities;
 //    Authority userAuthentication;
 //    private String principal;
     private String name;
     public CustomPrincipal principal;
+
+    public String sub;
  }

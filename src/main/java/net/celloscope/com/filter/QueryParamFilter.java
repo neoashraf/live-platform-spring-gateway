@@ -84,8 +84,7 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
 
                         if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
                             ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, user.getTokenAttributes().get("username").toString(),
-                                    user.getTokenAttributes().containsValue("mfiId") ? user.getTokenAttributes().get("mfiId").toString() : null,
-                                    user.getTokenAttributes().get("instituteOid").toString());
+                                    user.getTokenAttributes().get("keycloakId").toString());
                             log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
                             return chain.filter(modifiedExchange);
                         }
@@ -105,33 +104,18 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
         };
     }
 
-    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String loginId,String mfiId,String instituteOid) {
-//        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>();
-//        stringStringLinkedMultiValueMap.put("loginId", Collections.singletonList(loginId));
-        if(mfiId!=null) {
+    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String userName, String keycloakId) {
+//        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>()
             return originalExchange.mutate()
                     .request(originalRequest -> originalRequest.uri(
                             UriComponentsBuilder.fromUri(originalExchange.getRequest()
                                             .getURI())
-                                    .queryParam("loginId", Collections.singletonList(loginId))
-                                    .queryParam("mfiId", Collections.singletonList(mfiId))
-                                    .queryParam("instituteOid", Collections.singletonList(instituteOid))
+                                    .queryParam("userName", Collections.singletonList(userName))
+                                    .queryParam("keyCloakId", Collections.singletonList(keycloakId))
 //                                .replaceQueryParams(stringStringLinkedMultiValueMap)
                                     .build()
                                     .toUri())).build();
-        }
-        else{
-            return originalExchange.mutate()
-                    .request(originalRequest -> originalRequest.uri(
-                            UriComponentsBuilder.fromUri(originalExchange.getRequest()
-                                            .getURI())
-                                    .queryParam("loginId", Collections.singletonList(loginId))
-//                                    .queryParam("mfiId", Collections.singletonList(mfiId))
-                                    .queryParam("instituteOid", Collections.singletonList(instituteOid))
-//                                .replaceQueryParams(stringStringLinkedMultiValueMap)
-                                    .build()
-                                    .toUri())).build();
-        }
+
     }
 
 }

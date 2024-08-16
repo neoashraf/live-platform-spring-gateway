@@ -47,19 +47,20 @@ public  class CustomIntrospector implements ReactiveOpaqueTokenIntrospector {
                 .doOnSuccess(response -> log.info("Successfully get response from auth server : {}", response))
                 .onErrorMap(throwable -> new InsufficientAuthenticationException(throwable.getMessage()))
                 .map(validateUserResponse -> {
-                    uriParam.put("USER_ID", validateUserResponse.getName());
+                    uriParam.put("keycloakId", validateUserResponse.getSub());
                     uriParam.put("username", validateUserResponse.getName());
-                    uriParam.put("mfiId", validateUserResponse.getPrincipal().getMfiId());
-                    uriParam.put("instituteOid", validateUserResponse.getPrincipal().getInstituteOid());
+//                    uriParam.put("mfiId", validateUserResponse.getPrincipal().getMfiId());
+//                    uriParam.put("instituteOid", validateUserResponse.getPrincipal().getInstituteOid());
                     return new DefaultOAuth2AuthenticatedPrincipal(
                             validateUserResponse.getName(), uriParam, extractAuthorities(validateUserResponse));
                 });
-        return oAuth2AuthenticatedPrincipalMono.doOnSuccess(oAuth2AuthenticatedPrincipal -> log.info("oAuth2AuthenticatedPrincipalMono : {}", oAuth2AuthenticatedPrincipal.getAttributes()));
+        return oAuth2AuthenticatedPrincipalMono.doOnSuccess(oAuth2AuthenticatedPrincipal -> log.info("oAuth2AuthenticatedPrincipalMono : {}", oAuth2AuthenticatedPrincipal.getName()));
     }
 
     private Collection<GrantedAuthority> extractAuthorities(ValidateUserResponse principal) {
-        return principal.getAuthorities().stream()
-                .map(authorities -> new SimpleGrantedAuthority(authorities.getAuthority()))
-                .collect(Collectors.toList());
+        return null;
+//        return principal.getAuthorities().stream()
+//                .map(authorities -> new SimpleGrantedAuthority(authorities.getAuthority()))
+//                .collect(Collectors.toList());
     }
 }

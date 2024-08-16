@@ -1,38 +1,47 @@
-<!--<?xml version="1.0" encoding="UTF-8"?>-->
-<!--<configuration>-->
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property resource="application.properties" />
+    <property name="LOG_DIR" value="/var/log/ib/gateway-server" />
 
-<!--	<property scope="context" name="COLORIZER_COLORS" value="boldred@,boldyellow@,boldgreen@,boldcyan@,boldblue@" />-->
+    <appender name="Console"
+              class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [ ${spring.application.name}, %X{spanId:-}, %X{traceId:-}, %X{Method} %X{Uri} ] [Request-Trace-Id: %X{Trace-Id}] [%t] %highlight(%-5level) %yellow(%class{0}) - %msg%n%throwable
+            </Pattern>
+        </layout>
+    </appender>
 
-<!--	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">-->
-<!--		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
-<!--	        <level>INFO</level>-->
-<!--	    </filter>-->
-<!--		<encoder>-->
-<!--			<charset>UTF-8</charset>-->
-<!--            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%L - %msg%n</pattern>-->
-<!--		</encoder>-->
-<!--	</appender>-->
+    <appender name="RollingFile"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/gateway-server.log</file>
+        <encoder
+                class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [ ${spring.application.name}, %X{spanId:-}, %X{traceId:-}, %X{Method} %X{Uri} ] [Request-Trace-Id: %X{Trace-Id}] [%t] %-5level %class{0} - %msg%n%throwable
+            </Pattern>
+        </encoder>
 
-<!--	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
-<!--		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
-<!--	        <level>INFO</level>-->
-<!--	    </filter>-->
-<!--		<file>log/02-api-gateway.log</file>-->
-<!--		<prudent>false</prudent>-->
-<!--		<append>true</append>-->
-<!--		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
-<!--			<fileNamePattern>log/archived/02-api-gateway__%d{yyyy-MM-dd}.log.gz</fileNamePattern>-->
-<!--		</rollingPolicy>-->
-<!--		<encoder>-->
-<!--			<charset>UTF-8</charset>-->
-<!--			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36}:%L - %msg%n</pattern>-->
-<!--		</encoder>-->
-<!--	</appender>-->
+        <rollingPolicy
+                class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/archived/gateway-server-%d{yyyy-MM-dd_HH}.log.gz
+            </fileNamePattern>
 
+        </rollingPolicy>
+    </appender>
 
-<!--	<root level="DEBUG">-->
-<!--		<appender-ref ref="console" />-->
-<!--		<appender-ref ref="file" />-->
-<!--	</root>-->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender" >
+        <queueSize>1000000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="RollingFile" />
+    </appender>
 
-<!--</configuration>-->
+    <!-- LOG everything at INFO level -->
+
+    <root level="info">
+        <appender-ref ref="ASYNC" />
+        <appender-ref ref="Console" />
+    </root>
+
+</configuration>
