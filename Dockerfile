@@ -5,6 +5,7 @@
 # CMD ["java", "-jar", "api-gateway-1.0.jar"]
 
 
+# Stage 1: Build
 FROM gradle:jdk17 as builder
 WORKDIR /workspace
 
@@ -18,7 +19,10 @@ RUN ./gradlew build -x test
 RUN ls -la build/libs
 
 # Extract the JAR file
-RUN mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/*-SNAPSHOT.jar)
+RUN mkdir -p build/dependency && \
+    JAR_FILE=$(ls build/libs/*-SNAPSHOT.jar) && \
+    cd build/dependency && \
+    jar -xf ../libs/$(basename $JAR_FILE)
 
 FROM openjdk:17
 WORKDIR /workspace
