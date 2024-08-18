@@ -6,7 +6,7 @@
 
 
 # Stage 1: Build
-FROM gradle:jdk17 as builder
+FROM gradle:8.4-jdk17 AS builder
 WORKDIR /workspace
 
 COPY . /workspace/
@@ -20,10 +20,11 @@ RUN ls -la build/libs
 
 # Extract the JAR file
 RUN mkdir -p build/dependency && \
-    JAR_FILE=$(ls build/libs/*-SNAPSHOT.jar) && \
+    JAR_FILE=$(ls build/libs/*.jar | head -n 1) && \
     cd build/dependency && \
     jar -xf ../libs/$(basename $JAR_FILE)
 
+# Stage 2: Runtime
 FROM openjdk:17
 WORKDIR /workspace
 ENV TZ=Asia/Dhaka
