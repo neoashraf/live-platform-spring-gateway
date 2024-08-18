@@ -12,10 +12,13 @@ COPY . /workspace/
 
 RUN chmod +x gradlew
 
-RUN ./gradlew build --x test
+RUN ./gradlew build -x test
 
+# Verify the contents of the build/libs directory
+RUN ls -la build/libs
+
+# Extract the JAR file
 RUN mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/*-SNAPSHOT.jar)
-RUN echo $(ls -a)
 
 FROM openjdk:17
 WORKDIR /workspace
