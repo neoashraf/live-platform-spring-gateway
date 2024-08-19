@@ -106,7 +106,7 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
                             UriComponentsBuilder.fromUri(originalExchange.getRequest()
                                             .getURI())
                                     .queryParam("userName", Collections.singletonList(userName))
-                                    .queryParam("keyCloakId", Collections.singletonList(keycloakId))
+                                    .queryParam("keycloakId", Collections.singletonList(keycloakId))
 //                                .replaceQueryParams(stringStringLinkedMultiValueMap)
                                     .build()
                                     .toUri())).build();
