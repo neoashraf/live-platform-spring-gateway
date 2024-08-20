@@ -12,7 +12,9 @@ public class ValidateUserResponse {
 //    Authority userAuthentication;
 //    private String principal;
     private String name;
+    private String preferred_username;
     public CustomPrincipal principal;
 
     public String sub;
+    public String email;
  }
