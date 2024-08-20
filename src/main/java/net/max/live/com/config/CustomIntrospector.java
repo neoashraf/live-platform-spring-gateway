@@ -46,9 +46,9 @@ public  class CustomIntrospector implements ReactiveOpaqueTokenIntrospector {
                 .onErrorMap(throwable -> new InsufficientAuthenticationException(throwable.getMessage()))
                 .map(validateUserResponse -> {
                     uriParam.put("keycloakId", validateUserResponse.getSub());
-                    uriParam.put("username", validateUserResponse.getName());
-//                    uriParam.put("mfiId", validateUserResponse.getPrincipal().getMfiId());
-//                    uriParam.put("instituteOid", validateUserResponse.getPrincipal().getInstituteOid());
+                    uriParam.put("username", validateUserResponse.getPreferred_username());
+                    uriParam.put("email", validateUserResponse.getEmail());
+                    uriParam.put("name", validateUserResponse.getName());
                     return new DefaultOAuth2AuthenticatedPrincipal(
                             validateUserResponse.getName(), uriParam, extractAuthorities(validateUserResponse));
                 });

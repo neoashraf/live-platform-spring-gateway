@@ -79,7 +79,7 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
 
                         if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
                             ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, user.getTokenAttributes().get("username").toString(),
-                                    user.getTokenAttributes().get("keycloakId").toString());
+                                    user.getTokenAttributes().get("keycloakId").toString(), user.getTokenAttributes().get("email").toString());
                             log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
                             return chain.filter(modifiedExchange);
                         }
@@ -99,17 +99,18 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
         };
     }
 
-    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String userName, String keycloakId) {
+    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String userName, String keycloakId, String email ) {
 //        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>()
-            return originalExchange.mutate()
-                    .request(originalRequest -> originalRequest.uri(
-                            UriComponentsBuilder.fromUri(originalExchange.getRequest()
-                                            .getURI())
-                                    .queryParam("userName", Collections.singletonList(userName))
-                                    .queryParam("keycloakId", Collections.singletonList(keycloakId))
+        return originalExchange.mutate()
+                .request(originalRequest -> originalRequest.uri(
+                        UriComponentsBuilder.fromUri(originalExchange.getRequest()
+                                        .getURI())
+                                .queryParam("userName", Collections.singletonList(userName))
+                                .queryParam("keycloakId", Collections.singletonList(keycloakId))
+                                .queryParam("email", Collections.singletonList(email))
 //                                .replaceQueryParams(stringStringLinkedMultiValueMap)
-                                    .build()
-                                    .toUri())).build();
+                                .build()
+                                .toUri())).build();
 
     }
 

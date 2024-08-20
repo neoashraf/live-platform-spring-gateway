@@ -8,11 +8,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ValidateUserResponse {
-//    List<Authority> authorities;
+    //    List<Authority> authorities;
 //    Authority userAuthentication;
 //    private String principal;
     private String name;
+    private String preferred_username;
     public CustomPrincipal principal;
 
     public String sub;
+    public String email;
  }
