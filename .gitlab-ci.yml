@@ -41,7 +41,7 @@ deploy:
     - git pull
     - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
     - NEW_VERSION=$(($VERSION + 1))
-    - echo "MAX_LIVE_SPRING_GATEWAY_VERSION=$NEW_VERSION" > .env
+    - sed -i "s/MAX_LIVE_SPRING_GATEWAY_VERSION=$VERSION/MAX_LIVE_SPRING_GATEWAY_VERSION=$NEW_VERSION/" .env
     - cat .env
     - git add .env 
     - git commit -m "max-live-spring-gateway branch=dev $(date +\"%Y-%m-%d %H:%M:%S\")" 
