@@ -9,11 +9,12 @@ RUN chmod +x gradlew
 RUN gradle clean build -x test
 
 # Extract the built JAR file into a directory for dependency management
-RUN mkdir -p build/dependency && (cd build/dependency; jar -xf ../libs/*-SNAPSHOT.jar)
+RUN mkdir -p build/dependency && \
+   JAR_FILE=$(ls build/libs/*.jar | head -n 1) && \
+   cd build/dependency && \
+   jar -xf ../libs/$(basename $JAR_FILE)
 
 RUN echo $(ls -a build/dependency)
-
-
 
 # Stage 2: Runtime
 FROM openjdk:17
