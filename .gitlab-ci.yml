@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway
+  DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway:1
   DEPLOY_DIRECTORY: /opt/max-live/dev/max-live-deployment
   # Ensure SSH_PRIVATE_KEY is set in your GitLab CI/CD variables
 
