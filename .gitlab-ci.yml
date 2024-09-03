@@ -4,19 +4,8 @@ stages:
 
 variables:
   DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway
-  # REMOTE_HOST: 44.209.31.1
-  # REMOTE_USER: ubuntu
   DEPLOY_DIRECTORY: /opt/max-live/dev/max-live-deployment
   # Ensure SSH_PRIVATE_KEY is set in your GitLab CI/CD variables
-
-# before_script:
-#   - 'which ssh-agent || ( apk update -y && apk add openssh-client -y )'
-#   - eval $(ssh-agent -s)
-#   - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-#   - mkdir -p ~/.ssh
-#   - chmod 700 ~/.ssh
-#   - ssh-keyscan $REMOTE_HOST >> ~/.ssh/known_hosts
-#   - chmod 644 ~/.ssh/known_hosts
 
 build:
   stage: build
