@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway:v1
+  DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway
   # REMOTE_HOST: 44.209.31.1
   # REMOTE_USER: ubuntu
   DEPLOY_DIRECTORY: /opt/max-live/dev/max-live-deployment
