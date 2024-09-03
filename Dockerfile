@@ -4,8 +4,6 @@ WORKDIR /workspace
 
 COPY . /workspace/
 
-RUN chmod +x gradlew
-
 RUN gradle clean build -x test
 
 # Extract the built JAR file into a directory for dependency management
@@ -22,7 +20,7 @@ WORKDIR /workspace
 ENV TZ=Asia/Dhaka
 
 # Create a directory for application logs
-RUN mkdir -p /var/log/max-live-spring-gateway
+RUN mkdir -p /var/log/spring
 
 # Copy the dependencies from the build stage to the runtime stage
 ARG DEPENDENCY=/workspace/build/dependency
