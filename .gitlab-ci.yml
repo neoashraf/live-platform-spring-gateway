@@ -27,8 +27,8 @@ build:
     - echo "IMAGE_NAME=$IMAGE_NAME"
     - popd
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-    - docker build -t $DOCKER_IMAGE_NAME .
-    - docker push $DOCKER_IMAGE_NAME
+    - docker build -t $IMAGE_NAME .
+    - docker push $IMAGE_NAME
 
 deploy:
   stage: deploy
