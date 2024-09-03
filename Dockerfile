@@ -29,3 +29,4 @@ COPY --from=builder ${DEPENDENCY}/BOOT-INF/classes app
 ENTRYPOINT ["java","-cp","app:app/lib/*","net/max/live/com/SpringCloudGatewayApplication"]
 
 
+
