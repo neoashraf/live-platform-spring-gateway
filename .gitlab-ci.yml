@@ -44,7 +44,7 @@ deploy:
     - echo "MAX_LIVE_SPRING_GATEWAY_VERSION=$NEW_VERSION" > .env
     - cat .env
     - git add .env 
-    - git commit -m "max-live-spring-business branch=dev $(date +\"%Y-%m-%d %H:%M:%S\")" 
+    - git commit -m "max-live-spring-gateway branch=dev $(date +\"%Y-%m-%d %H:%M:%S\")" 
     - git push
 
 
