@@ -1,52 +1,101 @@
 stages:
-  - build
-  - deploy
+  - build_dev
+  - build_prod
+  - deploy_dev
+  - deploy_prod
 
 variables:
-  DOCKER_IMAGE_NAME: technologieswithak2/max-live-spring-gateway
-  DEPLOY_DIRECTORY: /opt/max-live/dev/max-live-deployment
+  DOCKER_IMAGE_NAME_PROD: technologieswithak2/prod-max-live-spring-gateway
+  DOCKER_IMAGE_NAME_DEV: technologieswithak2/max-live-spring-gateway
+  DEPLOY_DIRECTORY_DEV: /opt/max-live/dev/max-live-deployment
+  DEPLOY_DIRECTORY_PROD: /opt/max-live/prod/max-live-deployment
   # Ensure SSH_PRIVATE_KEY is set in your GitLab CI/CD variables
 
-build:
-  stage: build
+build_dev:
+  stage: build_dev
   tags:
     - max-live
-  # image: docker:latest
-  # services:
-  #   - docker:dind
+  only:
+    - dev
+  resource_group: deploy_max_live
   script:
-    - git config --global --add safe.directory $DEPLOY_DIRECTORY
-    - pushd $DEPLOY_DIRECTORY
+    - git config --global --add safe.directory $DEPLOY_DIRECTORY_DEV
+    - pushd $DEPLOY_DIRECTORY_DEV
     - git checkout dev
     - git pull
     - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
     - echo "VERSION=$VERSION"
     - NEW_VERSION=$(($VERSION + 1))
     - echo "NEW_VERSION=$NEW_VERSION"
-    - IMAGE_NAME="$DOCKER_IMAGE_NAME:$NEW_VERSION"
+    - IMAGE_NAME="$DOCKER_IMAGE_NAME_DEV:$NEW_VERSION"
     - echo "IMAGE_NAME=$IMAGE_NAME"
     - popd
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
     - docker build -t $IMAGE_NAME .
     - docker push $IMAGE_NAME
 
-deploy:
-  stage: deploy
+deploy_dev:
+  stage: deploy_dev
   tags:
     - max-live
+  only:
+    - dev
+  resource_group: deploy_max_live
   script:
-    - git config --global --add safe.directory $DEPLOY_DIRECTORY
-    - cd $DEPLOY_DIRECTORY 
+    - git config --global --add safe.directory $DEPLOY_DIRECTORY_DEV
+    - cd $DEPLOY_DIRECTORY_DEV
     - git checkout dev
     - git pull
     - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
     - NEW_VERSION=$(($VERSION + 1))
     - sed -i "s/MAX_LIVE_SPRING_GATEWAY_VERSION=$VERSION/MAX_LIVE_SPRING_GATEWAY_VERSION=$NEW_VERSION/" .env
     - cat .env
-    - git add .env 
-    - git commit -m "max-live-spring-gateway branch=dev $(date +\"%Y-%m-%d %H:%M:%S\")" 
+    - git add .env
+    - git commit -m "max-live-spring-gateway branch=dev $(date +\"%Y-%m-%d %H:%M:%S\")"
     - git push
 
+build_prod:
+  stage: build_prod
+  tags:
+    - max-live
+  only:
+    - main
+  resource_group: deploy_max_live
+  script:
+    - git config --global --add safe.directory $DEPLOY_DIRECTORY_PROD
+    - pushd $DEPLOY_DIRECTORY_PROD
+    - git checkout main
+    - git pull
+    - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
+    - echo "VERSION=$VERSION"
+    - NEW_VERSION=$(($VERSION + 1))
+    - echo "NEW_VERSION=$NEW_VERSION"
+    - IMAGE_NAME="$DOCKER_IMAGE_NAME_PROD:$NEW_VERSION"
+    - echo "IMAGE_NAME=$IMAGE_NAME"
+    - popd
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+    - docker build -t $IMAGE_NAME .
+    - docker push $IMAGE_NAME
+
+deploy_prod:
+  stage: deploy_prod
+  tags:
+    - max-live
+  only:
+    - main
+  resource_group: deploy_max_live
+  script:
+    - git config --global --add safe.directory $DEPLOY_DIRECTORY_PROD
+    - cd $DEPLOY_DIRECTORY_PROD
+    - git checkout dev
+    - git pull
+    - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
+    - NEW_VERSION=$(($VERSION + 1))
+    - sed -i "s/MAX_LIVE_SPRING_GATEWAY_VERSION=$VERSION/MAX_LIVE_SPRING_GATEWAY_VERSION=$NEW_VERSION/" .env
+    - cat .env
+    - git add .env
+    - git commit -m "max-live-spring-gateway branch=main $(date +\"%Y-%m-%d %H:%M:%S\")"
+    - git push
 
 
 
