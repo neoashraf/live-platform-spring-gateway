@@ -87,7 +87,7 @@ deploy_prod:
   script:
     - git config --global --add safe.directory $DEPLOY_DIRECTORY_PROD
     - cd $DEPLOY_DIRECTORY_PROD
-    - git checkout dev
+    - git checkout main
     - git pull
     - VERSION=$(grep MAX_LIVE_SPRING_GATEWAY_VERSION .env | cut -d '=' -f2)
     - NEW_VERSION=$(($VERSION + 1))
