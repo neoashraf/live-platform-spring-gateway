@@ -34,6 +34,7 @@ public class SecurityConfig {
                 .authorizeExchange().pathMatchers(
                         "/management/**",
                         "/actuator/**",
+                        RoutedPath.KEY_CLOAK_WRAPPER_PATH_PATTERN,
                         RoutedPath.KEY_CLOAK_REALM_PATH_PATTERN
                 )
                 .permitAll()
