@@ -57,7 +57,7 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
 //    }
 
 
-    @Override
+   /* @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
@@ -97,7 +97,42 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
 //            }
 //            return chain.filter(exchange);
         };
+    }*/
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
+
+            // Skip filtering only for the specific public API
+            if (path.matches("^/business/api/v1/devices/[a-f0-9\\-]+/check-banned$")) {
+                return chain.filter(exchange);
+            }
+
+            ServerHttpResponse response = exchange.getResponse();
+            HttpHeaders headers = response.getHeaders();
+            headers.remove(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
+
+            return exchange.getPrincipal()
+                    .flatMap(principal -> {
+                        log.info("Principal : {}", principal);
+                        BearerTokenAuthentication user = (BearerTokenAuthentication) principal;
+                        log.info("getTokenAttributes() : {}", user.getTokenAttributes());
+
+                        if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+                            ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange,
+                                    user.getTokenAttributes().get("username").toString(),
+                                    user.getTokenAttributes().get("keycloakId").toString(),
+                                    user.getTokenAttributes().get("email").toString());
+                            log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
+                            return chain.filter(modifiedExchange);
+                        }
+                        return chain.filter(exchange);
+                    });
+        };
     }
+
 
     private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String userName, String keycloakId, String email ) {
 //        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>()
