@@ -24,12 +24,12 @@ public class SecurityConfig {
     private final PermissionUseCase permissionUseCase ;
     private final CustomIntrospector customIntrospector;
 
-    @Bean
+    /*@Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity) {
         httpSecurity
                 .oauth2ResourceServer(oauth2 -> oauth2
-                .opaqueToken(opaqueToken -> opaqueToken
-                        .introspector(customIntrospector)))
+                        .opaqueToken(opaqueToken -> opaqueToken
+                                .introspector(customIntrospector)))
                 .csrf().disable()
                 .authorizeExchange().pathMatchers(
                         "/management/**",
@@ -59,6 +59,34 @@ public class SecurityConfig {
 //                .sessionManagement()
 //                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         ;
+        return httpSecurity.build();
+    }*/
+
+    @Bean
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity) {
+        httpSecurity
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .opaqueToken(opaqueToken -> opaqueToken
+                                .introspector(customIntrospector)))
+                .csrf().disable()
+                .authorizeExchange()
+
+                // Public endpoints (without authentication)
+                .pathMatchers("/business/api/v1/devices/*/check-banned").permitAll()  // ✅ Your public API
+
+                // Existing public paths
+                .pathMatchers(
+                        "/management/**",
+                        "/actuator/**",
+                        RoutedPath.KEY_CLOAK_WRAPPER_PATH_PATTERN,
+                        RoutedPath.KEY_CLOAK_REALM_PATH_PATTERN
+                ).permitAll()
+
+                // Secure all other endpoints
+                .anyExchange().authenticated()
+                .and()
+                .headers().frameOptions().disable();
+
         return httpSecurity.build();
     }
 
