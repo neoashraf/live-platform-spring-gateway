@@ -106,7 +106,7 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
             String path = request.getURI().getPath();
 
             // Skip filtering only for the specific public API
-            if (path.matches("^/business/api/v1/devices/[a-f0-9\\-]+/status$")) {
+            if (path.matches("^/business/api/v1/devices/status$")) {
                 return chain.filter(exchange);
             }
 
