@@ -72,7 +72,7 @@ public class SecurityConfig {
                 .authorizeExchange()
 
                 // Public endpoints (without authentication)
-                .pathMatchers("/business/api/v1/devices/*/check-banned").permitAll()  // ✅ Your public API
+                .pathMatchers("/business/api/v1/devices/status").permitAll()  // ✅ Your public API
 
                 // Existing public paths
                 .pathMatchers(
