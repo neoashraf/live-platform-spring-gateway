@@ -106,69 +106,62 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
-            String path = request.getURI().getPath();
             HttpMethod method = request.getMethod();
+            String path = request.getURI().getPath();
 
-            // Skip filtering for allowed public APIs
-            if (AllowedPaths.allowedPaths.contains(new PathAndMethod(path, method))) {
-                return chain.filter(exchange);
-            }
-
-            ServerHttpResponse response = exchange.getResponse();
-            HttpHeaders headers = response.getHeaders();
-            headers.remove(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
+            boolean isPublicApi = AllowedPaths.allowedPaths.contains(new PathAndMethod(path, method));
 
             return exchange.getPrincipal()
                     .flatMap(principal -> {
-                        log.info("Principal: {}", principal);
                         if (principal instanceof BearerTokenAuthentication user) {
-                            log.info("TokenAttributes: {}", user.getTokenAttributes());
-
                             if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
                                 Map<String, String> queryParams = buildQueryParams(user);
                                 ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, queryParams);
-                                log.info("Modified Request Headers: {}", modifiedExchange.getRequest().getHeaders());
                                 return chain.filter(modifiedExchange);
                             }
                         }
                         return chain.filter(exchange);
-                    });
+                    })
+                    .switchIfEmpty(chain.filter(exchange)); // no principal? continue normal
         };
     }
 
-    /**
-     * Dynamically build query parameters from BearerTokenAuthentication attributes.
-     */
     private Map<String, String> buildQueryParams(BearerTokenAuthentication user) {
         Map<String, String> params = new HashMap<>();
-        params.put("userName", (String) user.getTokenAttributes().get("username"));
-        params.put("keycloakId", (String) user.getTokenAttributes().get("keycloakId"));
-        params.put("email", (String) user.getTokenAttributes().get("email"));
+        putIfNotBlank(params, "userName", (String) user.getTokenAttributes().get("username"));
+        putIfNotBlank(params, "keycloakId", (String) user.getTokenAttributes().get("keycloakId"));
+        putIfNotBlank(params, "email", (String) user.getTokenAttributes().get("email"));
 
         Object azp = user.getTokenAttributes().get("azp");
         if (azp != null) {
             params.put("azp", azp.toString());
         }
-        log.info("Query Params built: {}", params);
 
+        log.info("Query Params built: {}", params);
         return params;
     }
 
-    /**
-     * Modify the original request URI by adding query parameters dynamically.
-     */
+    private void putIfNotBlank(Map<String, String> map, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            map.put(key, value);
+        }
+    }
+
     private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, Map<String, String> queryParams) {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(originalExchange.getRequest().getURI());
 
         queryParams.forEach((key, value) -> {
             if (value != null && !value.isBlank()) {
-                uriBuilder.queryParam(key, Collections.singletonList(value));
+                uriBuilder.queryParam(key, value);
             }
         });
 
-        return originalExchange.mutate()
-                .request(originalRequest -> originalRequest.uri(uriBuilder.build().toUri()))
+        ServerHttpRequest mutatedRequest = originalExchange.getRequest().mutate()
+                .uri(uriBuilder.build().toUri())
                 .build();
+
+        return originalExchange.mutate().request(mutatedRequest).build();
     }
+
 
 }
