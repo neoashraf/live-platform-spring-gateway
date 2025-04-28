@@ -3,9 +3,12 @@ package net.max.live.com.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.max.live.com.enums.HeaderNames;
+import net.max.live.com.filter.webfilter.AllowedPaths;
+import net.max.live.com.filter.webfilter.PathAndMethod;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
@@ -104,9 +107,10 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
+            HttpMethod method = request.getMethod();
 
-            // Skip filtering only for the specific public API
-            if (path.matches("^/business/api/v1/devices/status$")) {
+            // Skip filtering for allowed public APIs
+            if (AllowedPaths.allowedPaths.contains(new PathAndMethod(path, method))) {
                 return chain.filter(exchange);
             }
 
@@ -116,37 +120,55 @@ public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFil
 
             return exchange.getPrincipal()
                     .flatMap(principal -> {
-                        log.info("Principal : {}", principal);
-                        BearerTokenAuthentication user = (BearerTokenAuthentication) principal;
-                        log.info("getTokenAttributes() : {}", user.getTokenAttributes());
+                        log.info("Principal: {}", principal);
+                        if (principal instanceof BearerTokenAuthentication user) {
+                            log.info("TokenAttributes: {}", user.getTokenAttributes());
 
-                        if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
-                            ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange,
-                                    user.getTokenAttributes().get("username").toString(),
-                                    user.getTokenAttributes().get("keycloakId").toString(),
-                                    user.getTokenAttributes().get("email").toString());
-                            log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
-                            return chain.filter(modifiedExchange);
+                            if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+                                Map<String, String> queryParams = buildQueryParams(user);
+                                ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, queryParams);
+                                log.info("Modified Request Headers: {}", modifiedExchange.getRequest().getHeaders());
+                                return chain.filter(modifiedExchange);
+                            }
                         }
                         return chain.filter(exchange);
                     });
         };
     }
 
+    /**
+     * Dynamically build query parameters from BearerTokenAuthentication attributes.
+     */
+    private Map<String, String> buildQueryParams(BearerTokenAuthentication user) {
+        Map<String, String> params = new HashMap<>();
+        params.put("userName", (String) user.getTokenAttributes().get("username"));
+        params.put("keycloakId", (String) user.getTokenAttributes().get("keycloakId"));
+        params.put("email", (String) user.getTokenAttributes().get("email"));
 
-    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String userName, String keycloakId, String email ) {
-//        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>()
+        Object azp = user.getTokenAttributes().get("azp");
+        if (azp != null) {
+            params.put("azp", azp.toString());
+        }
+        log.info("Query Params built: {}", params);
+
+        return params;
+    }
+
+    /**
+     * Modify the original request URI by adding query parameters dynamically.
+     */
+    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, Map<String, String> queryParams) {
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(originalExchange.getRequest().getURI());
+
+        queryParams.forEach((key, value) -> {
+            if (value != null && !value.isBlank()) {
+                uriBuilder.queryParam(key, Collections.singletonList(value));
+            }
+        });
+
         return originalExchange.mutate()
-                .request(originalRequest -> originalRequest.uri(
-                        UriComponentsBuilder.fromUri(originalExchange.getRequest()
-                                        .getURI())
-                                .queryParam("userName", Collections.singletonList(userName))
-                                .queryParam("keycloakId", Collections.singletonList(keycloakId))
-                                .queryParam("email", Collections.singletonList(email))
-//                                .replaceQueryParams(stringStringLinkedMultiValueMap)
-                                .build()
-                                .toUri())).build();
-
+                .request(originalRequest -> originalRequest.uri(uriBuilder.build().toUri()))
+                .build();
     }
 
 }

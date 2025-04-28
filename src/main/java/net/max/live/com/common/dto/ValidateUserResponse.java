@@ -1,5 +1,6 @@
 package net.max.live.com.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,10 +12,24 @@ public class ValidateUserResponse {
     //    List<Authority> authorities;
 //    Authority userAuthentication;
 //    private String principal;
+    @JsonProperty("name")
     private String name;
-    private String preferred_username;
-    public CustomPrincipal principal;
 
-    public String sub;
-    public String email;
+    @JsonProperty("preferred_username")
+    private String preferredUsername;
+
+    @JsonProperty("sub")
+    private String sub;
+
+    @JsonProperty("email")
+    private String email;
+
+    @JsonProperty("azp")
+    private String azp;
+
+    @JsonProperty("typ")
+    private String typ;
+
+    @JsonProperty("sid")
+    private String sid;
  }

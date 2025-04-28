@@ -1,39 +1,136 @@
 package net.max.live.com.filter.webfilter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.jknack.handlebars.internal.lang3.tuple.Pair;
 import lombok.extern.slf4j.Slf4j;
+import net.max.live.com.util.DeviceValidatorUtil;
 import net.max.live.com.util.TracerUtil;
+import net.max.live.com.util.exception.ErrorBody;
+import net.max.live.com.util.exception.ErrorResponse;
+import net.max.live.com.util.exception.ExceptionHandlerUtil;
 import org.slf4j.MDC;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
+import static net.max.live.com.filter.webfilter.AllowedPaths.allowedPaths;
 
 @Component
 @Slf4j
 public class IWebFilter implements WebFilter {
 
     private final TracerUtil tracerUtil;
+    private final DeviceValidatorUtil deviceValidatorUtil;
 
-    public IWebFilter(TracerUtil tracerUtil) {
+
+    public IWebFilter(TracerUtil tracerUtil, DeviceValidatorUtil deviceValidatorUtil) {
         this.tracerUtil = tracerUtil;
+        this.deviceValidatorUtil = deviceValidatorUtil;
     }
 
     @Override
-    public Mono<Void> filter(ServerWebExchange serverWebExchange, WebFilterChain webFilterChain) {
-        setRequestHeaders(serverWebExchange);
-        setMdcAttributeForLogBack(serverWebExchange);
-        logRequest(serverWebExchange.getRequest());
-        setResponseHeader(serverWebExchange);
-        logResponse(serverWebExchange);
-        return webFilterChain.filter(serverWebExchange);
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        setRequestHeaders(exchange);
+        setMdcAttributeForLogBack(exchange);
+        logRequest(exchange.getRequest());
+
+        Map<String, String> capturedMdcContext = MDC.getCopyOfContextMap();
+        if (capturedMdcContext == null) {
+            capturedMdcContext = Collections.emptyMap();
+        }
+        Map<String, String> finalCapturedMdcContext = capturedMdcContext;
+
+        HttpMethod method = exchange.getRequest().getMethod();
+        String path = exchange.getRequest().getPath().value();
+
+        Mono<Void> resultMono;
+
+        if (AllowedPaths.allowedPaths.contains(new PathAndMethod(path, method))) {
+            log.info("Proceeding without device validation");
+            resultMono = proceedWithoutDeviceValidation(exchange, chain);
+        } else {
+            resultMono = runDeviceValidationWhenClientIsMobile(exchange)
+                    .doOnSuccess(unused -> log.info("Device validation passed"))
+                    .then(Mono.defer(() -> proceedWithoutDeviceValidation(exchange, chain)))
+                    .onErrorResume(ExceptionHandlerUtil.class, ex -> {
+                        // Log error message and status
+                        log.error("Device validation failed: {}", ex.getMessage());
+
+                        // Prepare the error response
+                        ErrorResponse errorResponse = new ErrorResponse(ex,
+                                exchange.getRequest().getPath().toString() // Using requestId from exchange
+                        );
+
+                        // Set the appropriate HTTP status
+                        exchange.getResponse().setStatusCode(ex.getCode());
+
+                        // Serialize the ErrorResponse to JSON and return it
+                        byte[] bytes = serializeErrorResponse(errorResponse);
+
+                        DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+
+                        // Return the custom error response
+                        return exchange.getResponse().writeWith(Mono.just(buffer));
+                    });
+        }
+
+        // Propagate MDC context in the reactive chain
+        return resultMono.contextWrite(ctx -> ctx.put("mdcContextMap", finalCapturedMdcContext));
     }
+
+    private byte[] serializeErrorResponse(ErrorResponse errorResponse) {
+        try {
+            // Convert errorResponse to JSON using Jackson ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsBytes(errorResponse);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize error response: {}", e.getMessage());
+            return new byte[0];
+        }
+    }
+
+
+
+    private Mono<Void> proceedWithoutDeviceValidation(ServerWebExchange exchange, WebFilterChain chain) {
+        setResponseHeader(exchange);
+        logResponse(exchange);
+        return chain.filter(exchange);
+    }
+
+    private Mono<Void> runDeviceValidationWhenClientIsMobile(ServerWebExchange exchange) {
+        return exchange.getPrincipal()
+                .filter(principal -> principal instanceof BearerTokenAuthentication)
+                .cast(BearerTokenAuthentication.class)
+                .flatMap(token -> {
+                    log.info("Token received for device validation");
+                    log.info("Token attributes: {}", token.getTokenAttributes());
+                    String azp = (String) token.getTokenAttributes().get("azp");
+                    log.info("azp: {}", azp);
+                    if ("max-live-web".equalsIgnoreCase(azp)) {
+                        return deviceValidatorUtil.validateDeviceOrThrow(exchange);
+                    }
+                    return Mono.empty();
+                });
+    }
+
+
+
 
     private void logRequest(ServerHttpRequest request) {
         log.info("""
