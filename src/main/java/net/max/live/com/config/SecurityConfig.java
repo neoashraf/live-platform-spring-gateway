@@ -46,43 +46,6 @@ public class SecurityConfig {
         log.info("All Public Paths at startup: {}", allPublicPaths);
     }
 
-    /*@Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity) {
-        httpSecurity
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .opaqueToken(opaqueToken -> opaqueToken
-                                .introspector(customIntrospector)))
-                .csrf().disable()
-                .authorizeExchange().pathMatchers(
-                        "/management/**",
-                        "/actuator/**",
-                        RoutedPath.KEY_CLOAK_WRAPPER_PATH_PATTERN,
-                        RoutedPath.KEY_CLOAK_REALM_PATH_PATTERN
-                )
-                .permitAll()
-        ;
-
-//        Objects.requireNonNull(permissionUseCase.getAllPermissionData().collectList().block())
-//                .forEach( permission -> {
-//                    log.debug("permission ++ {}", permission);
-//                    if(permission.getPermissionName().equalsIgnoreCase("All"))
-//                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl()).permitAll();
-//                    else
-//                        httpSecurity.authorizeExchange().pathMatchers(permission.getMethod(), permission.getUrl())
-//                                .hasAnyAuthority(permission.getPermissionName());
-//                });
-
-        httpSecurity.authorizeExchange()
-                .anyExchange().authenticated()
-                .and()
-                .headers()
-                .frameOptions().disable()
-//                .and()
-//                .sessionManagement()
-//                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        ;
-        return httpSecurity.build();
-    }*/
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
@@ -92,7 +55,7 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers.frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(allPublicPaths.toArray(new String[0])).permitAll()
@@ -136,17 +99,29 @@ public class SecurityConfig {
 
 
     @Bean
-    public UrlBasedCorsConfigurationSource corsConfigurationSource(){
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("*"));
-        corsConfiguration.setAllowedMethods(List.of("*"));
-        corsConfiguration.setAllowedHeaders(List.of( "*" ));
+
+        corsConfiguration.setAllowedOrigins(List.of(
+                "https://owner-dev.themaxlive.com",
+                "https://country-admin-dev.themaxlive.com",
+                "https://agency-dev.themaxlive.com",
+                "https://reseller-dev.themaxlive.com",
+                "https://master-portal-dev.themaxlive.com"
+                )); // ✅ Specific origin, not "*"
+
+        // ✅ Required for JWTs or sessions sent in requests
+        corsConfiguration.setAllowCredentials(true);
+
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         corsConfiguration.setMaxAge(8000L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
+
 }
 
 
