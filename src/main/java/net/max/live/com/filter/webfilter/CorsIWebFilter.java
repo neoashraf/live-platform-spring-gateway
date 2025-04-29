@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CorsIWebFilter {
 
-    @Bean
+    /*@Bean
     public CorsWebFilter corsWebFilter() {
         // Create and configure the CORS settings
         CorsConfiguration config = new CorsConfiguration();
@@ -32,6 +32,6 @@ public class CorsIWebFilter {
 
         // Return the CorsWebFilter with the UrlBasedCorsConfigurationSource
         return new CorsWebFilter((CorsConfigurationSource) source);
-    }
+    }*/
 
 }
