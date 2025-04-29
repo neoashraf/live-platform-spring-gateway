@@ -55,7 +55,7 @@ public class SecurityConfig {
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .headers(headers -> headers.frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable))
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(allPublicPaths.toArray(new String[0])).permitAll()
@@ -98,7 +98,7 @@ public class SecurityConfig {
     }
 
 
-    @Bean
+    /*@Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
@@ -115,6 +115,19 @@ public class SecurityConfig {
 
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        corsConfiguration.setMaxAge(8000L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", corsConfiguration);
+        return source;
+    }*/
+
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource(){
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedOrigins(List.of("*"));
+        corsConfiguration.setAllowedMethods(List.of("*"));
+        corsConfiguration.setAllowedHeaders(List.of( "*" ));
         corsConfiguration.setMaxAge(8000L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
