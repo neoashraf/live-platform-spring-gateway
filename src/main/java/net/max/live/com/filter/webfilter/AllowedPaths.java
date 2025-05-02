@@ -11,7 +11,8 @@ public class AllowedPaths {
             new PathAndMethod("/business/api/v1/devices", HttpMethod.POST),
             new PathAndMethod("/business/api/v1/logged-in-user", HttpMethod.GET),
             new PathAndMethod("/business/api/v1/devices/status", HttpMethod.GET),
-            new PathAndMethod("/business/api/v1/complete-registration", HttpMethod.POST)
+            new PathAndMethod("/business/api/v1/complete-registration", HttpMethod.POST),
+            new PathAndMethod("/api/v1/storage/resource/upload", HttpMethod.POST)
     );
 
 }
