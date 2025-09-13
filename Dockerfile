@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM gradle:jdk17 AS builder
+FROM gradle:7.6-jdk17 AS builder
 WORKDIR /workspace
 
 COPY . /workspace/

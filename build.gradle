@@ -8,9 +8,16 @@ plugins {
 
 group = 'net.celloscope'
 version = '1.0'
-archivesBaseName = 'api-gateway'
-sourceCompatibility = '17'
-mainClassName = 'net.celloscope.com.SpringCloudGatewayApplication'
+// Set Java version in java plugin block
+// Set main class in application plugin block
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
+}
+
+application {
+	mainClass = 'net.celloscope.com.SpringCloudGatewayApplication'
+}
 
 repositories {
 	mavenCentral()
