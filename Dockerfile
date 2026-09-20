@@ -27,6 +27,6 @@ ARG DEPENDENCY=/workspace/build/dependency
 COPY --from=builder ${DEPENDENCY}/BOOT-INF/lib app/lib
 COPY --from=builder ${DEPENDENCY}/META-INF app/META-INF
 COPY --from=builder ${DEPENDENCY}/BOOT-INF/classes app
-ENTRYPOINT ["java","-cp","app:app/lib/*","net/max/live/com/SpringCloudGatewayApplication"]
+ENTRYPOINT ["java","-cp","app:app/lib/*","com/ak2/live/gateway/SpringCloudGatewayApplication"]
 
 

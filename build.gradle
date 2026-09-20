@@ -6,7 +6,7 @@ plugins {
 	id 'io.spring.dependency-management' version '1.0.14.RELEASE'
 }
 
-group = 'net.celloscope'
+group = 'com.ak2'
 version = '1.0'
 // Set Java version in java plugin block
 // Set main class in application plugin block
@@ -16,7 +16,7 @@ java {
 }
 
 application {
-	mainClass = 'net.celloscope.com.SpringCloudGatewayApplication'
+	mainClass = 'com.ak2.live.gateway.SpringCloudGatewayApplication'
 }
 
 repositories {

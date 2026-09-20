@@ -1,0 +1,167 @@
+package com.ak2.live.gateway.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import com.ak2.live.gateway.enums.HeaderNames;
+import com.ak2.live.gateway.filter.webfilter.AllowedPaths;
+import com.ak2.live.gateway.filter.webfilter.PathAndMethod;
+import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
+import org.springframework.stereotype.Component;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.*;
+
+@Slf4j
+@Component
+public class QueryParamFilter extends AbstractGatewayFilterFactory<QueryParamFilter.Config> {
+
+    private final ObjectMapper objectMapper;
+
+    public QueryParamFilter() {
+        super(QueryParamFilter.Config.class);
+        objectMapper = new ObjectMapper();
+    }
+
+    public static class Config {
+        //Put the configuration properties for your filter here
+    }
+
+//    @Override
+//    public GatewayFilter apply(Config config) {
+//        return (exchange, chain) -> {
+//            ServerHttpRequest request = exchange.getRequest();
+//            if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+//                ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, "AUTHORIZED_LOGIN_ID");
+//                log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
+//                return chain.filter(modifiedExchange);
+//            }
+//            return chain.filter(exchange);
+//        };
+//    }
+//
+//    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, String loginId) {
+////        LinkedMultiValueMap<String, String> stringStringLinkedMultiValueMap = new LinkedMultiValueMap<>();
+////        stringStringLinkedMultiValueMap.put("loginId", Collections.singletonList(loginId));
+//        return originalExchange.mutate()
+//                .request(originalRequest -> originalRequest.uri(
+//                        UriComponentsBuilder.fromUri(originalExchange.getRequest()
+//                                        .getURI())
+//                                .queryParam("loginId", Collections.singletonList(loginId))
+////                                .replaceQueryParams(stringStringLinkedMultiValueMap)
+//                                .build()
+//                                .toUri())).build();
+//    }
+
+
+   /* @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            ServerHttpResponse response = exchange.getResponse();
+            HttpHeaders headers = response.getHeaders();
+            headers.remove(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN);
+//            headers.remove(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS);
+//            headers.remove(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS);
+            return exchange
+//                    .getResponse().getHeaders().toSingleValueMap()
+                    .getPrincipal()
+                    .flatMap(principal -> {
+                        // Here you can access the principal and get the user information
+                        // For example, if the principal contains first name and last name:
+                        log.info("Principal : {}", principal);
+//                        UserDetails userName= (UserDetails) principal;
+                        BearerTokenAuthentication user = (BearerTokenAuthentication) principal;
+                        log.info("getTokenAttributes() : {}", user.getTokenAttributes());
+
+                        if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+                            ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, user.getTokenAttributes().get("username").toString(),
+                                    user.getTokenAttributes().get("keycloakId").toString(), user.getTokenAttributes().get("email").toString());
+                            log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
+                            return chain.filter(modifiedExchange);
+                        }
+                        return chain.filter(exchange);
+//                        String firstName = principal.getAttribute("firstName");
+//                        String lastName = principal.getAttribute("lastName");
+//                        return "Hello, " + firstName + " " + lastName + "!";
+                    });
+//                    .defaultIfEmpty("Hello, anonymous!");
+
+//            if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+//                ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, "AUTHORIZED_LOGIN_ID","MFI_ID","INSTITUTE_OID");
+//                log.info("Request Headers " + modifiedExchange.getRequest().getHeaders());
+//                return chain.filter(modifiedExchange);
+//            }
+//            return chain.filter(exchange);
+        };
+    }*/
+
+    @Override
+    public GatewayFilter apply(Config config) {
+        return (exchange, chain) -> {
+            ServerHttpRequest request = exchange.getRequest();
+            HttpMethod method = request.getMethod();
+            String path = request.getURI().getPath();
+
+            boolean isPublicApi = AllowedPaths.allowedPaths.contains(new PathAndMethod(path, method));
+
+            return exchange.getPrincipal()
+                    .flatMap(principal -> {
+                        if (principal instanceof BearerTokenAuthentication user) {
+                            if (request.getHeaders().containsKey(HeaderNames.Authorization.getValue())) {
+                                Map<String, String> queryParams = buildQueryParams(user);
+                                ServerWebExchange modifiedExchange = modifyRequestQueryParams(exchange, queryParams);
+                                return chain.filter(modifiedExchange);
+                            }
+                        }
+                        return chain.filter(exchange);
+                    })
+                    .switchIfEmpty(chain.filter(exchange)); // no principal? continue normal
+        };
+    }
+
+    private Map<String, String> buildQueryParams(BearerTokenAuthentication user) {
+        Map<String, String> params = new HashMap<>();
+        putIfNotBlank(params, "userName", (String) user.getTokenAttributes().get("username"));
+        putIfNotBlank(params, "keycloakId", (String) user.getTokenAttributes().get("keycloakId"));
+        putIfNotBlank(params, "email", (String) user.getTokenAttributes().get("email"));
+
+        Object azp = user.getTokenAttributes().get("azp");
+        if (azp != null) {
+            params.put("azp", azp.toString());
+        }
+
+        log.info("Query Params built: {}", params);
+        return params;
+    }
+
+    private void putIfNotBlank(Map<String, String> map, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            map.put(key, value);
+        }
+    }
+
+    private ServerWebExchange modifyRequestQueryParams(ServerWebExchange originalExchange, Map<String, String> queryParams) {
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(originalExchange.getRequest().getURI());
+
+        queryParams.forEach((key, value) -> {
+            if (value != null && !value.isBlank()) {
+                uriBuilder.queryParam(key, value);
+            }
+        });
+
+        ServerHttpRequest mutatedRequest = originalExchange.getRequest().mutate()
+                .uri(uriBuilder.build().toUri())
+                .build();
+
+        return originalExchange.mutate().request(mutatedRequest).build();
+    }
+
+
+}
