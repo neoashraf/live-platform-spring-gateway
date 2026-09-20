@@ -36,7 +36,18 @@ export SPRING_PROFILES_ACTIVE=local
 ./gradlew bootRun
 ```
 
-Per-environment values - Keycloak issuer/realm, downstream service URLs, the Mongo URI, the TLS store paths and passwords - are set directly in `application-<profile>.properties` (`local`, `dev`, `a-live-dev`, `prod`) rather than read from the shell environment; `SPRING_PROFILES_ACTIVE` picks which profile loads (it defaults to `a-live-dev` in `application.properties` if unset). The TLS key/trust store (`server-keystore.jks`) and its password are committed in `application.properties` as-is in this sample - in a real deployment these belong in environment variables or a secrets manager, not in the repo.
+Per-environment values - Keycloak issuer/realm, downstream service URLs, the Mongo URI - are set directly in `application-<profile>.properties` (`local`, `dev`, `a-live-dev`, `prod`) rather than read from the shell environment; `SPRING_PROFILES_ACTIVE` picks which profile loads (it defaults to `a-live-dev` in `application.properties` if unset). The TLS key/trust store and its passwords are the exception: they're read only from environment variables and are not committed to the repo.
+
+### Environment variables
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `SSL_KEYSTORE_PATH` | Optional (required if `server.ssl.enabled=true`) | Path to the PKCS12 key store holding the server's TLS certificate. |
+| `SSL_KEYSTORE_PASSWORD` | Optional (required if `server.ssl.enabled=true`) | Password for `SSL_KEYSTORE_PATH`. |
+| `SSL_TRUSTSTORE_PATH` | Optional (required if `server.ssl.enabled=true`) | Path to the PKCS12 trust store used to validate client certificates (mutual TLS, `server.ssl.client-auth=need`). |
+| `SSL_TRUSTSTORE_PASSWORD` | Optional (required if `server.ssl.enabled=true`) | Password for `SSL_TRUSTSTORE_PATH`. |
+
+The key store and trust store are not part of the repository; a self-signed pair for local use can be generated with keytool.
 
 Health check: `GET /actuator/health`. Route table: `GET /actuator/gateway/routes`.
 
