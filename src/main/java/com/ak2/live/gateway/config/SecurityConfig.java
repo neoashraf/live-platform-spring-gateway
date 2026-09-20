@@ -103,11 +103,11 @@ public class SecurityConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
 
         corsConfiguration.setAllowedOrigins(List.of(
-                "https://owner-dev.themaxlive.com",
-                "https://country-admin-dev.themaxlive.com",
-                "https://agency-dev.themaxlive.com",
-                "https://reseller-dev.themaxlive.com",
-                "https://master-portal-dev.themaxlive.com"
+                "https://owner-dev.example.com",
+                "https://country-admin-dev.example.com",
+                "https://agency-dev.example.com",
+                "https://reseller-dev.example.com",
+                "https://master-portal-dev.example.com"
                 )); // ✅ Specific origin, not "*"
 
         // ✅ Required for JWTs or sessions sent in requests

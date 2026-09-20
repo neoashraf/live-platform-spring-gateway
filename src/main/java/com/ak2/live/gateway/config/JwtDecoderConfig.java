@@ -11,7 +11,7 @@ public class JwtDecoderConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         // Your issuer URI, same as Keycloak's realm URL
-        String issuerUri = "https://sso-dev.themaxlive.com/realms/max-live";
+        String issuerUri = "https://sso-dev.example.com/realms/live-platform";
         return JwtDecoders.fromIssuerLocation(issuerUri);
     }
 }

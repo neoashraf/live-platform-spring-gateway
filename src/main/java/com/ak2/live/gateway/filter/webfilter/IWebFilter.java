@@ -165,7 +165,7 @@ public class IWebFilter implements WebFilter {
                     log.info("Token attributes: {}", token.getTokenAttributes());
                     String azp = (String) token.getTokenAttributes().get("azp");
                     log.info("azp: {}", azp);
-                    if ("max-live-web".equalsIgnoreCase(azp)) {
+                    if ("live-platform-web".equalsIgnoreCase(azp)) {
                         return deviceValidatorUtil.validateDeviceOrThrow(exchange);
                     }
                     return Mono.empty();
