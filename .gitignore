@@ -36,3 +36,10 @@ out/
 ### VS Code ###
 .vscode/
 log/
+
+### Secrets ###
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
